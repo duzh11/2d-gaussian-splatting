@@ -19,6 +19,9 @@ from functools import partial
 import open3d as o3d
 import trimesh
 
+import torchvision
+import utils.vis_utils as VISUils
+
 def post_process_mesh(mesh, cluster_to_keep=1000):
     """
     Post-process a mesh to filter out floaters and disconnected parts
@@ -89,12 +92,15 @@ class GaussianExtractor(object):
 
     @torch.no_grad()
     def clean(self):
-        self.depthmaps = []
-        # self.alphamaps = []
         self.rgbmaps = []
-        # self.normals = []
-        # self.depth_normals = []
+        self.alphamaps = []
+        self.depthmaps = []
+        self.normals = []
+        self.depth_normals = []
         self.viewpoint_stack = []
+        # render expected/median depthmaps
+        self.expected_depthmaps = []
+        self.median_depthmaps = []
 
     @torch.no_grad()
     def reconstruction(self, viewpoint_stack):
@@ -107,19 +113,31 @@ class GaussianExtractor(object):
             render_pkg = self.render(viewpoint_cam, self.gaussians)
             rgb = render_pkg['render']
             alpha = render_pkg['rend_alpha']
-            normal = torch.nn.functional.normalize(render_pkg['rend_normal'], dim=0)
             depth = render_pkg['surf_depth']
+            normal = torch.nn.functional.normalize(render_pkg['rend_normal'], dim=0)
             depth_normal = render_pkg['surf_normal']
+            # render expected/median depthmaps
+            expected_depth = render_pkg['expected_depth']
+            median_depth = render_pkg['median_depth']
+            
             self.rgbmaps.append(rgb.cpu())
+            self.alphamaps.append(alpha.cpu())
             self.depthmaps.append(depth.cpu())
-            # self.alphamaps.append(alpha.cpu())
-            # self.normals.append(normal.cpu())
-            # self.depth_normals.append(depth_normal.cpu())
+            self.normals.append(normal.cpu())
+            self.depth_normals.append(depth_normal.cpu())
+            # render expected/median depthmaps
+            self.expected_depthmaps.append(expected_depth.cpu())
+            self.median_depthmaps.append(median_depth.cpu())
         
-        # self.rgbmaps = torch.stack(self.rgbmaps, dim=0)
-        # self.depthmaps = torch.stack(self.depthmaps, dim=0)
-        # self.alphamaps = torch.stack(self.alphamaps, dim=0)
-        # self.depth_normals = torch.stack(self.depth_normals, dim=0)
+        self.rgbmaps = torch.stack(self.rgbmaps, dim=0)
+        self.alphamaps = torch.stack(self.alphamaps, dim=0)
+        self.depthmaps = torch.stack(self.depthmaps, dim=0)
+        self.normals = torch.stack(self.normals, dim=0)
+        self.depth_normals = torch.stack(self.depth_normals, dim=0)
+        # render expected/median depthmaps
+        self.expected_depthmaps = torch.stack(self.expected_depthmaps, dim=0)
+        self.median_depthmaps = torch.stack(self.median_depthmaps, dim=0)
+
         self.estimate_bounding_sphere()
 
     def estimate_bounding_sphere(self):
@@ -286,6 +304,22 @@ class GaussianExtractor(object):
         os.makedirs(render_path, exist_ok=True)
         os.makedirs(vis_path, exist_ok=True)
         os.makedirs(gts_path, exist_ok=True)
+
+        ### Optional: save depth/normal maps
+        render_outputs = ['mask', 'expected_depth', 'median_depth', 'normal', 'depth2normal']
+        render_dict = {
+            'mask': self.alphamaps,
+            'expected_depth': self.expected_depthmaps,
+            'median_depth': self.median_depthmaps,
+            'normal': self.normals,
+            'depth2normal': self.depth_normals
+        }
+        outputs_path = []
+        for output_idx in render_outputs:
+            output_idx_path = os.path.join(path, f"renders_{output_idx}")
+            os.makedirs(output_idx_path, exist_ok=True)
+            outputs_path.append(output_idx_path)
+        
         for idx, viewpoint_cam in tqdm(enumerate(self.viewpoint_stack), desc="export images"):
             gt = viewpoint_cam.original_image[0:3, :, :]
             save_img_u8(gt.permute(1,2,0).cpu().numpy(), os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
@@ -293,3 +327,26 @@ class GaussianExtractor(object):
             save_img_f32(self.depthmaps[idx][0].cpu().numpy(), os.path.join(vis_path, 'depth_{0:05d}'.format(idx) + ".tiff"))
             # save_img_u8(self.normals[idx].permute(1,2,0).cpu().numpy() * 0.5 + 0.5, os.path.join(vis_path, 'normal_{0:05d}'.format(idx) + ".png"))
             # save_img_u8(self.depth_normals[idx].permute(1,2,0).cpu().numpy() * 0.5 + 0.5, os.path.join(vis_path, 'depth_normal_{0:05d}'.format(idx) + ".png"))
+
+            ### Optional: save depth/normal maps
+            render_dict = {
+                'mask': self.alphamaps[idx],
+                'expected_depth': self.expected_depthmaps[idx],
+                'median_depth': self.median_depthmaps[idx],
+                'normal': self.normals[idx],
+                'depth2normal': self.depth_normals[idx]
+            }
+
+            for jdx, output_jdx in enumerate(render_outputs):
+                render_output = render_dict[output_jdx]
+                
+                if 'mask' in output_jdx:
+                    torchvision.utils.save_image(render_output, os.path.join(outputs_path[jdx], '{0:05d}'.format(idx) + ".png"))
+                elif '_depth' in output_jdx:
+                    render_output_map = VISUils.apply_depth_colormap(render_output[0,...,None], render_dict['mask'][0,...,None]).detach()
+                    torchvision.utils.save_image(render_output_map.permute(2,0,1), os.path.join(outputs_path[jdx], '{0:05d}'.format(idx) + ".png"))
+                elif 'normal' in output_jdx:
+                    render_output_map = ((render_output+1)/2).clip(0, 1)
+                    torchvision.utils.save_image(render_output_map, os.path.join(outputs_path[jdx], '{0:05d}'.format(idx) + ".png"))
+                else:
+                    pass
