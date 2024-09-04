@@ -15,8 +15,8 @@ all_scenes = []
 all_scenes.extend(dtu_scenes)
 
 if not args.skip_metrics:
-    parser.add_argument('--DTU_Official', "-DTU", required=True, type=str)
-    parser.add_argument('--eval_path', required=True, type=str)
+    parser.add_argument('--DTU_Official', required=True, type=str)
+    # parser.add_argument('--eval_path', required=True, type=str)
     args = parser.parse_args()
 
 
