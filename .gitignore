@@ -11,4 +11,7 @@ data
 *.out
 eval
 *.npz
-**/tmp
+**/tmp*
+train*.sh
+run_DTU_*.py
+run_TNT_*.py

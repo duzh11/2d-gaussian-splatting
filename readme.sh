@@ -4,7 +4,7 @@
 
 python train.py -s <path to dataset>
 # --lambda_normal  # hyperparameter for normal consistency
-# --lambda_distortion # hyperparameter for depth distortion
+# --lambda_dist # hyperparameter for depth distortion
 # --depth_ratio # 0 for mean depth and 1 for median depth, 0 works for most cases (unbounded scense), 1 works for bounded scenes
 
 # render images and (un)bounded TSDF fusion
@@ -25,11 +25,17 @@ python scripts/tnt_eval.py --TNT_data <path to the preprocessed TNT dataset> --T
 # scan97, scan105, scan106, scan110, scan114, scan118, scan122
 
 python train.py -s ../../Data/DTU/scan24 -m ../exps/full/DTU/scan24 -r 2 --depth_ratio 1
-python render.py -s ../../Data/DTU/scan24 -m ../exps/full/DTU/scan24 -r 2 --depth_ratio 1
+# python render.py -s ../../Data/DTU/scan24 -m ../exps/full/DTU/scan24 -r 2 --depth_ratio 1
 
 python scripts/dtu_eval.py --dtu ../../Data/DTU --output_path ../exps/full/DTU --DTU_Official ../../Data/Offical_DTU_Dataset --skip_training
 python metrics.py -m ../exps/full/DTU/scan24 -f train
 
+
 # +++++++++ TNT +++++++++ # 
 # Barn, Caterpillar, Courthouse, Ignatius, Meetingroom, Truck
+python train.py -s ../../Data/TNT/Barn -m ../exps/full/TNT/Barn -r 2 --depth_ratio 1
+# python render.py -s ../../Data/TNT/Barn -m ../exps/full/TNT/Barn -r 2 --depth_ratio 1
 
+python scripts/tnt_eval.py --TNT_data ../../Data/TNT --TNT_GT ../../Data/Official_TNT_dataset --output_path ../exps/full/TNT --skip_training
+python metrics.py -m ../exps/full/TNT/Barn -f train
+python metrics.py -m ../exps/full/TNT/Barn -f test

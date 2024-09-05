@@ -18,22 +18,22 @@ if not args.skip_metrics:
 
 
 if not args.skip_training:
-    common_args = " --quiet --test_iterations -1 --depth_ratio 1.0 -r 2 "
+    common_args = " --quiet --test_iterations -1 --depth_ratio 1.0 -r 2 --eval"
     
     for scene in tnt_360_scenes:
         source = args.TNT_data + "/" + scene
         print("python train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args + ' --lambda_dist 100')
-        os.system("python train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+        os.system("python train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args + ' --lambda_dist 100')
 
     for scene in tnt_large_scenes:
         source = args.TNT_data + "/" + scene
         print("python train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args+ ' --lambda_dist 10')
-        os.system("python train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+        os.system("python train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args+ ' --lambda_dist 10')
 
 
 if not args.skip_rendering:
     all_sources = []
-    common_args = " --quiet --depth_ratio 1.0 "
+    common_args = " --quiet --depth_ratio 1.0 -r 2 --eval"
 
     for scene in tnt_360_scenes:
         source = args.TNT_data + "/" + scene
@@ -50,7 +50,7 @@ if not args.skip_metrics:
     all_scenes = tnt_360_scenes + tnt_large_scenes
 
     for scene in all_scenes:
-        ply_file = f"{args.output_path}/{scene}/train/ours_{iteration}/fuse_post.ply"
+        ply_file = f"{args.output_path}/{scene}/train/ours_30000/fuse_post.ply"
         string = f"OMP_NUM_THREADS=4 python {script_dir}/eval_tnt/run.py " + \
             f"--dataset-dir {args.TNT_GT}/{scene} " + \
             f"--traj-path {args.TNT_data}/{scene}/{scene}_COLMAP_SfM.log " + \
