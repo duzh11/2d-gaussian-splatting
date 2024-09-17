@@ -177,13 +177,17 @@ class GaussianExtractor(object):
             color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8
         )
 
+        alpha_thres = 0.5
         for i, cam_o3d in tqdm(enumerate(to_cam_open3d(self.viewpoint_stack)), desc="TSDF integration progress"):
             rgb = self.rgbmaps[i]
             depth = self.depthmaps[i]
-            
+
+            # todo: TSDF fusion without masks
             # if we have mask provided, use it
-            if mask_backgrond and (self.viewpoint_stack[i].gt_alpha_mask is not None):
-                depth[(self.viewpoint_stack[i].gt_alpha_mask < 0.5)] = 0
+            # if mask_backgrond and (self.viewpoint_stack[i].gt_alpha_mask is not None):
+            #     depth[(self.viewpoint_stack[i].gt_alpha_mask < 0.5)] = 0
+
+            depth[self.alphamaps[i] < alpha_thres] = 0
 
             # make open3d rgbd
             rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(

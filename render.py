@@ -94,7 +94,8 @@ if __name__ == "__main__":
             name = 'fuse_unbounded.ply'
             mesh = gaussExtractor.extract_mesh_unbounded(resolution=args.mesh_res)
         else:
-            name = 'fuse.ply'
+            # todo: TSDF fusion without masks
+            name = 'fuse_womask.ply'
             depth_trunc = (gaussExtractor.radius * 2.0) if args.depth_trunc < 0  else args.depth_trunc
             voxel_size = (depth_trunc / args.mesh_res) if args.voxel_size < 0 else args.voxel_size
             sdf_trunc = 5.0 * voxel_size if args.sdf_trunc < 0 else args.sdf_trunc

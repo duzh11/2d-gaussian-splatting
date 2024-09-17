@@ -49,6 +49,7 @@ def cull_scan(scan, mesh_path, result_mesh_file, instance_dir):
 
     # load mesh
     mesh = trimesh.load(mesh_path)
+    mesh_origin = mesh.copy()
     
     # load transformation matrix
 
@@ -97,8 +98,14 @@ def cull_scan(scan, mesh_path, result_mesh_file, instance_dir):
     # transform vertices to world 
     scale_mat = scale_mats[0]
     mesh.vertices = mesh.vertices * scale_mat[0, 0] + scale_mat[:3, 3][None]
+    print(result_mesh_file)
     mesh.export(result_mesh_file)
     del mesh
+
+    # transfrom mesh_origin to world
+    mesh_origin.vertices = mesh_origin.vertices * scale_mat[0, 0] + scale_mat[:3, 3][None]
+    mesh_origin.export(result_mesh_file.split('.ply')[0] + '_womask.ply')
+    del mesh_origin
     
 
 if __name__ == "__main__":
@@ -126,4 +133,8 @@ if __name__ == "__main__":
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     cmd = f"python {script_dir}/eval.py --data {result_mesh_file} --scan {scan} --mode mesh --dataset_dir {Offical_DTU_Dataset} --vis_out_dir {out_dir}"
+    os.system(cmd)
+
+    origin_mesh_file = result_mesh_file.split('.ply')[0] + '_womask.ply'
+    cmd = f"python {script_dir}/eval.py --data {origin_mesh_file} --scan {scan} --mode mesh --dataset_dir {Offical_DTU_Dataset} --vis_out_dir {out_dir} --suffix_name womask"
     os.system(cmd)
