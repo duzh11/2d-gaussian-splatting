@@ -15,3 +15,4 @@ eval
 train*.sh
 run_DTU_*.py
 run_TNT_*.py
+submodules
