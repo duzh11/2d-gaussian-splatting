@@ -30,7 +30,7 @@ if not args.skip_training:
 
 if not args.skip_rendering:
     all_sources = []
-    common_args = " --quiet --depth_ratio 1.0 -r 2 --num_cluster 1 --voxel_size 0.004 --sdf_trunc 0.016 --depth_trunc 3.0 --skip_train --skip_test"
+    common_args = " --quiet --depth_ratio 1.0 -r 2 --num_cluster 1 --voxel_size 0.002 --sdf_trunc 0.016 --depth_trunc 3.0 --skip_train --skip_test"
     for scene in dtu_scenes:
         source = args.dtu + "/" + scene
         print("python render.py --iteration 30000 -s " + source + " -m" + args.output_path + "/" + scene + common_args)

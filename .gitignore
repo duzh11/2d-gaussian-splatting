@@ -5,7 +5,7 @@ build
 data
 *.ply
 **/PKG-INFO
-# submodules
+submodules/
 **__pycache__**
 *.png
 *.out
@@ -13,6 +13,5 @@ eval
 *.npz
 **/tmp*
 train*.sh
-run_DTU_*.py
-run_TNT_*.py
-submodules
+run_DTU*.py
+run_TNT*.py
