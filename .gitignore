@@ -13,5 +13,4 @@ eval
 *.npz
 **/tmp*
 train*.sh
-run_DTU*.py
-run_TNT*.py
+run_*.py

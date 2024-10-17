@@ -21,6 +21,7 @@ import trimesh
 
 import torchvision
 import utils.vis_utils as VISUils
+from utils.camera_utils import pick_indices_at_random, get_colored_points_from_depth
 
 def post_process_mesh(mesh, cluster_to_keep=1000):
     """
@@ -300,6 +301,92 @@ class GaussianExtractor(object):
         mesh.vertex_colors = o3d.utility.Vector3dVector(rgbs.cpu().numpy())
         return mesh
 
+    @torch.no_grad()
+    def extract_mesh_poisson(self, poisson_depth=3, total_points=2000000, outlier_removal=True):
+        """
+        Idea: backproject depth and normal maps into 3D oriented point cloud -> Poisson
+        copying from dnsplatter: https://github.com/maturk/dn-splatter
+        """
+        print("Running poisson reconstruction ...")
+        num_frames = len(self.viewpoint_stack)
+        samples_per_frame = (total_points + num_frames) // (num_frames)
+        print("samples per frame: ", samples_per_frame)
+        pcd_points = []
+        pcd_normals = []
+        pcd_colors = []
+        alpha_thres = 0.5
+
+        # get pcd
+        for i, cam_o3d in tqdm(enumerate(to_cam_open3d(self.viewpoint_stack)), desc="poisson reconstruction progress"):
+            # 2d rendering results
+            rgb = self.rgbmaps[i]
+            depth = self.depthmaps[i]
+            normals = self.normals[i]
+
+            # if we have mask provided, use it
+            # if mask_backgrond and (self.viewpoint_stack[i].gt_alpha_mask is not None):
+            #     depth[(viewpoint_cam.gt_alpha_mask < 0.5)] = 0
+            depth[self.alphamaps[i] < alpha_thres] = 0
+
+            # camera poses
+            w2c = torch.tensor(cam_o3d.extrinsic).to(depth.device)
+            c2w = w2c.inverse()
+            H, W = depth.shape[1], depth.shape[2]
+
+            # 3d points
+            valid_mask = depth
+            indices = pick_indices_at_random(valid_mask, samples_per_frame)
+            if len(indices) == 0:
+                    continue
+            
+            xyzs, rgbs = get_colored_points_from_depth(
+                    depths=depth.permute(1,2,0),
+                    rgbs=rgb.permute(1,2,0),
+                    fx=cam_o3d.intrinsic.intrinsic_matrix[0,0],
+                    fy=cam_o3d.intrinsic.intrinsic_matrix[1,1],
+                    cx=cam_o3d.intrinsic.intrinsic_matrix[0,2],  # type: ignore
+                    cy=cam_o3d.intrinsic.intrinsic_matrix[1,2],  # type: ignore
+                    img_size=(W, H),
+                    c2w=c2w,
+                    mask=indices,
+                )
+
+            pcd_points.append(xyzs)
+            pcd_colors.append(rgbs)
+            normals = normals.permute(1,2,0).view(-1, 3)[indices]
+            pcd_normals.append(normals)
+        
+        # pcd
+        pcd_points = torch.cat(pcd_points, dim=0)
+        pcd_colors = torch.cat(pcd_colors, dim=0)
+        pcd_normals = torch.cat(pcd_normals, dim=0)
+
+        pcd_points = pcd_points.cpu().numpy()
+        pcd_colors = pcd_colors.cpu().numpy()
+        pcd_normals = pcd_normals.cpu().numpy()
+
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(pcd_points)
+        pcd.colors = o3d.utility.Vector3dVector(pcd_colors)
+        pcd.normals = o3d.utility.Vector3dVector(pcd_normals)
+
+        if outlier_removal:
+            cl, ind = pcd.remove_statistical_outlier(
+                nb_neighbors=20, std_ratio=2.0
+            )
+            pcd = pcd.select_by_index(ind)
+
+        # poisson reconstruction
+        print("Poisson reconstruction... this may take a while.")
+        mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+            pcd, depth=int(poisson_depth)
+        )
+        vertices_to_remove = densities < np.quantile(densities, 0.01)
+        mesh.remove_vertices_by_mask(vertices_to_remove)
+        print("remoing vertices by densities...")
+
+        return pcd, mesh
+      
     @torch.no_grad()
     def export_image(self, path):
         render_path = os.path.join(path, "renders")
