@@ -183,8 +183,7 @@ class GaussianExtractor(object):
             rgb = self.rgbmaps[i]
             depth = self.depthmaps[i]
 
-            # todo: TSDF fusion without masks
-            # if require using mask and we have mask provided, use it
+            # * if require using mask and we have mask provided, use it
             if usingmask and mask_backgrond and (self.viewpoint_stack[i].gt_alpha_mask is not None):
                 depth[(self.viewpoint_stack[i].gt_alpha_mask < 0.5)] = 0
 

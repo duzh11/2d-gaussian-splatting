@@ -102,7 +102,7 @@ if __name__ == "__main__":
                 name = 'fuse_unbounded.ply'
                 mesh = gaussExtractor.extract_mesh_unbounded(resolution=args.mesh_res)
             else:
-                # todo: TSDF fusion without masks
+                # * TSDF fusion without masks
                 if args.usingmask:
                     name = 'fuse_wmask.ply'
                 else:
