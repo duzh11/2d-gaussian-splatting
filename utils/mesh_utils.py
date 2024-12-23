@@ -387,7 +387,7 @@ class GaussianExtractor(object):
         return pcd, mesh
       
     @torch.no_grad()
-    def export_image(self, path):
+    def export_image(self, path, near_plane = 0.0, far_plane = 5.0):
         render_path = os.path.join(path, "renders")
         gts_path = os.path.join(path, "gt")
         vis_path = os.path.join(path, "vis")
@@ -433,7 +433,7 @@ class GaussianExtractor(object):
                 if 'mask' in output_jdx:
                     torchvision.utils.save_image(render_output, os.path.join(outputs_path[jdx], '{0:05d}'.format(idx) + ".png"))
                 elif '_depth' in output_jdx:
-                    render_output_map = VISUils.apply_depth_colormap(render_output[0,...,None], render_dict['mask'][0,...,None]).detach()
+                    render_output_map = VISUils.apply_depth_colormap(render_output[0,...,None], render_dict['mask'][0,...,None], near_plane = near_plane, far_plane = far_plane).detach()
                     torchvision.utils.save_image(render_output_map.permute(2,0,1), os.path.join(outputs_path[jdx], '{0:05d}'.format(idx) + ".png"))
                 elif 'normal' in output_jdx:
                     render_output_map = ((render_output+1)/2).clip(0, 1)
