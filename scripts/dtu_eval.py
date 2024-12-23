@@ -43,7 +43,6 @@ if not args.skip_metrics:
         scan_id = scene[4:]
         ply_file = f"{args.output_path}/{scene}/train/ours_30000/"
         iteration = 30000
-        # todo: TSDF fusion without mask
         string = f"python {script_dir}/eval_dtu/evaluate_single_scene.py " + \
             f"--input_mesh {args.output_path}/{scene}/train/ours_30000/fuse_womask_post.ply " + \
             f"--scan_id {scan_id} --output_dir {args.output_path}/{scene}/vis " + \
