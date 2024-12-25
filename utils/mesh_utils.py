@@ -390,20 +390,11 @@ class GaussianExtractor(object):
     def export_image(self, path, near_plane = 0.0, far_plane = 5.0):
         render_path = os.path.join(path, "renders")
         gts_path = os.path.join(path, "gt")
-        vis_path = os.path.join(path, "vis")
         os.makedirs(render_path, exist_ok=True)
-        os.makedirs(vis_path, exist_ok=True)
         os.makedirs(gts_path, exist_ok=True)
 
         ### Optional: save depth/normal maps
         render_outputs = ['mask', 'expected_depth', 'median_depth', 'normal', 'depth2normal']
-        render_dict = {
-            'mask': self.alphamaps,
-            'expected_depth': self.expected_depthmaps,
-            'median_depth': self.median_depthmaps,
-            'normal': self.normals,
-            'depth2normal': self.depth_normals
-        }
         outputs_path = []
         for output_idx in render_outputs:
             output_idx_path = os.path.join(path, f"renders_{output_idx}")
@@ -414,9 +405,6 @@ class GaussianExtractor(object):
             gt = viewpoint_cam.original_image[0:3, :, :]
             save_img_u8(gt.permute(1,2,0).cpu().numpy(), os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
             save_img_u8(self.rgbmaps[idx].permute(1,2,0).cpu().numpy(), os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
-            save_img_f32(self.depthmaps[idx][0].cpu().numpy(), os.path.join(vis_path, 'depth_{0:05d}'.format(idx) + ".tiff"))
-            # save_img_u8(self.normals[idx].permute(1,2,0).cpu().numpy() * 0.5 + 0.5, os.path.join(vis_path, 'normal_{0:05d}'.format(idx) + ".png"))
-            # save_img_u8(self.depth_normals[idx].permute(1,2,0).cpu().numpy() * 0.5 + 0.5, os.path.join(vis_path, 'depth_normal_{0:05d}'.format(idx) + ".png"))
 
             ### Optional: save depth/normal maps
             render_dict = {
@@ -433,9 +421,11 @@ class GaussianExtractor(object):
                 if 'mask' in output_jdx:
                     torchvision.utils.save_image(render_output, os.path.join(outputs_path[jdx], '{0:05d}'.format(idx) + ".png"))
                 elif '_depth' in output_jdx:
+                    np.savez(os.path.join(outputs_path[jdx], '{0:05d}'.format(idx) + ".npz"), np.array(render_output[0,...]))
                     render_output_map = VISUils.apply_depth_colormap(render_output[0,...,None], render_dict['mask'][0,...,None], near_plane = near_plane, far_plane = far_plane).detach()
                     torchvision.utils.save_image(render_output_map.permute(2,0,1), os.path.join(outputs_path[jdx], '{0:05d}'.format(idx) + ".png"))
                 elif 'normal' in output_jdx:
+                    np.savez(os.path.join(outputs_path[jdx], '{0:05d}'.format(idx) + ".npz"), np.array(render_output.permute(1,2,0)))
                     render_output_map = ((render_output+1)/2).clip(0, 1)
                     torchvision.utils.save_image(render_output_map, os.path.join(outputs_path[jdx], '{0:05d}'.format(idx) + ".png"))
                 else:
