@@ -13,4 +13,8 @@ eval
 *.npz
 **/tmp*
 train*.sh
-run_*.py
+run_DTU_*.py
+run_TNT_*.py
+run_Mushroom_*.py
+run_TnT_advanced_*.py
+run_scannetpp_*.py
