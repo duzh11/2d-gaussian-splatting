@@ -92,15 +92,17 @@ if __name__ == "__main__":
         wandb = None
 
     json_name_lis = ['results_train', 'results_test']
-    # json_name_lis += ['result_mesh_tsdf', 'result_mesh_poisson', 'results_train_depth', 'results_test_depth', 'results_train_normal', 'results_test_normal']
+    if args.source_name in ['scannetpp']:
+        json_name_lis += ['result_mesh_tsdf', 'result_mesh_poisson', 'results_train_depth', 'results_test_depth', 'results_train_normal', 'results_test_normal']
 
     for json_name in json_name_lis:
         ### Summary results of all scenes
         summary_results(args.model_path, scene_lis, json_name = json_name, wandb=wandb)
 
         ### Summart resuults of inddoor and outdoor scenes of Mip360 dataset
-        mip360_outdoor_lis = [scene for scene in scene_lis if scene in mipnerf360_outdoor_scenes]
-        mip360_indoor_lis = [scene for scene in scene_lis if scene in mipnerf360_indoor_scenes]
+        if args.source_name == 'mipnerf360':
+            mip360_outdoor_lis = [scene for scene in scene_lis if scene in mipnerf360_outdoor_scenes]
+            mip360_indoor_lis = [scene for scene in scene_lis if scene in mipnerf360_indoor_scenes]
 
-        summary_results(args.model_path, mip360_indoor_lis, json_name = json_name, extension_name = 'indoor', wandb=wandb)
-        summary_results(args.model_path, mip360_outdoor_lis, json_name = json_name, extension_name = 'outdoor', wandb=wandb)
+            summary_results(args.model_path, mip360_indoor_lis, json_name = json_name, extension_name = 'indoor', wandb=wandb)
+            summary_results(args.model_path, mip360_outdoor_lis, json_name = json_name, extension_name = 'outdoor', wandb=wandb)
