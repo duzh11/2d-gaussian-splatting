@@ -23,7 +23,7 @@ import torchvision
 import utils.vis_utils as VISUils
 from utils.camera_utils import pick_indices_at_random, get_colored_points_from_depth
 
-def post_process_mesh(mesh, cluster_to_keep=1000):
+def post_process_mesh(mesh, cluster_to_keep=1):
     """
     Post-process a mesh to filter out floaters and disconnected parts
     """
