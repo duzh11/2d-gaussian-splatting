@@ -30,7 +30,7 @@ if not args.skip_training:
 
 if not args.skip_rendering:
     all_sources = []
-    common_args = " --quiet --depth_ratio 1.0 -r 2 --num_cluster 1 --voxel_size 0.002 --sdf_trunc 0.016 --depth_trunc 3.0 --skip_train --skip_test"
+    common_args = " --quiet --depth_ratio 1.0 -r 2 --num_cluster 1 --voxel_size 0.002 --sdf_trunc 0.016 --depth_trunc 3.0 --usingmask --near_plane 1.5 --far_plane 5.0"
     for scene in dtu_scenes:
         source = args.dtu + "/" + scene
         print("python render.py --iteration 30000 -s " + source + " -m" + args.output_path + "/" + scene + common_args)
@@ -44,7 +44,7 @@ if not args.skip_metrics:
         ply_file = f"{args.output_path}/{scene}/train/ours_30000/"
         iteration = 30000
         string = f"python {script_dir}/eval_dtu/evaluate_single_scene.py " + \
-            f"--input_mesh {args.output_path}/{scene}/train/ours_30000/fuse_womask_post.ply " + \
+            f"--input_mesh {args.output_path}/{scene}/train/ours_30000/fuse_wmask_post.ply " + \
             f"--scan_id {scan_id} --output_dir {args.output_path}/{scene}/vis " + \
             f"--mask_dir {args.dtu} " + \
             f"--DTU {args.DTU_Official}"

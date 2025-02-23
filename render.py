@@ -38,6 +38,7 @@ if __name__ == "__main__":
     parser.add_argument("--render_path", action="store_true")
     parser.add_argument("--mesh_type", default='TSDF', type=str, help='using TSDF or poisson reconstruction or ')
     parser.add_argument("--far_plane", type=float, default = 5.0)
+    parser.add_argument("--near_plane", type=float, default = 0.0)
     # TSDF
     parser.add_argument("--voxel_size", default=-1.0, type=float, help='Mesh: voxel size for TSDF')
     parser.add_argument("--depth_trunc", default=-1.0, type=float, help='Mesh: Max depth range for TSDF')
@@ -67,14 +68,14 @@ if __name__ == "__main__":
         print("export training images ...")
         os.makedirs(train_dir, exist_ok=True)
         gaussExtractor.reconstruction(scene.getTrainCameras())
-        gaussExtractor.export_image(train_dir, far_plane = torch.tensor(args.far_plane))
+        gaussExtractor.export_image(train_dir, near_plane = torch.tensor(args.near_plane), far_plane = torch.tensor(args.far_plane))
         
     
     if (not args.skip_test) and (len(scene.getTestCameras()) > 0):
         print("export rendered testing images ...")
         os.makedirs(test_dir, exist_ok=True)
         gaussExtractor.reconstruction(scene.getTestCameras())
-        gaussExtractor.export_image(test_dir, far_plane = torch.tensor(args.far_plane))
+        gaussExtractor.export_image(test_dir, near_plane = torch.tensor(args.near_plane), far_plane = torch.tensor(args.far_plane))
     
     
     if args.render_path:
@@ -84,7 +85,7 @@ if __name__ == "__main__":
         n_fames = 240
         cam_traj = generate_path(scene.getTrainCameras(), n_frames=n_fames)
         gaussExtractor.reconstruction(cam_traj)
-        gaussExtractor.export_image(traj_dir, far_plane = torch.tensor(args.far_plane))
+        gaussExtractor.export_image(traj_dir, near_plane = torch.tensor(args.near_plane), far_plane = torch.tensor(args.far_plane))
         create_videos(base_dir=traj_dir,
                     input_dir=traj_dir, 
                     out_name='render_traj', 

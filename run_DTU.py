@@ -13,11 +13,11 @@ cmd_lis=[]
 #     cmd_lis.append(f'python train.py -s ../../Data/DTU/{scene} -m ../exps/full/DTU/{scene} -r 2 --depth_ratio 1')
 
 # render images,  extract and eval meshes
-cmd_lis.append('python scripts/dtu_eval.py --dtu ../../Data/DTU --output_path ../exps/full/DTU --DTU_Official ../../Data/Offical_DTU_Dataset')
+cmd_lis.append('python scripts/dtu_eval.py --dtu ../../Data/DTU --output_path ../exps/full/DTU --DTU_Official ../../Data/Offical_DTU_Dataset --skip_training')
 
 # eval nvs
 for scene in dtu_scenes:
-    cmd_lis.append(f'python metrics.py -m ../exps/full/DTU/{scene} -f train')
+    # cmd_lis.append(f'python metrics.py -m ../exps/full/DTU/{scene} -f train')
     cmd_lis.append(f'python vis_outputs.py -m ../exps/full/DTU/{scene} -f train')
 
 # run cmd
